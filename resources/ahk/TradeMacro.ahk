@@ -1260,9 +1260,13 @@ TradeFunc_DoCurrencyRequest(currencyName = "", openSearchInBrowser = false, init
 		IDs := TradeGlobals.Get("CurrencyIDs")
 		Have:= TradeOpts.CurrencySearchHave		
 		
-		idWant := TradeFunc_MapCurrencyNameToID(currencyName)
-		idHave := TradeFunc_MapCurrencyNameToID(TradeOpts.CurrencySearchHave)
-
+		; currently not necessary
+		;idWant := TradeFunc_MapCurrencyNameToID(currencyName)
+		;idHave := TradeFunc_MapCurrencyNameToID(TradeOpts.CurrencySearchHave)
+		
+		idWant := TradeGlobals.Get("CurrencyIDs")[currencyName]
+		idHave := TradeGlobals.Get("CurrencyIDs")[TradeOpts.CurrencySearchHave]
+		
 		If (idWant and idHave) {
 			Url := "http://currency.poe.trade/search?league=" . LeagueName . "&online=x&want=" . idWant . "&have=" . idHave
 			currencyURL := Url
@@ -1363,8 +1367,6 @@ TradeFunc_ParseCurrencyIDs(html) {
 		Currencies[CurrencyName] := CurrencyID  
 		TradeGlobals.Set("CurrencyIDs", Currencies)
 	}
-	;debugprintarray(TradeGlobals.Get("CurrencyIDs"))
-	;debugprintarray(TradeCurrencyNames)
 }
 
 ; Parse currency.poe.trade to display tooltip with first X listings
@@ -1599,7 +1601,7 @@ TradeFunc_GetMeanMedianPrice(html, payload, ByRef errorMsg = ""){
 			prices[itemCount-1] := chaosEquivalent
 		}
 	}	
-	
+
 	If (error) {
 		errorMsg := "Couldn't find the chaos equiv. value for " error " item(s). Please report this."	
 	}	
@@ -1774,14 +1776,7 @@ TradeFunc_ParseHtml(html, payload, iLvl = "", ench = "", isItemAgeRequest = fals
 	; add search results to tooltip in table format
 	accounts := []
 	itemsListed := 0
-	While A_Index < NoOfItemsToShow {
-		/* Old code, somehow stopped working
-		ItemBlock		:= TradeUtils.StrX( html,       "<tbody id=""item-container-" . %A_Index%,  N,0,  "</tbody>", 1,23, N )
-		AccountName	:= TradeUtils.StrX( ItemBlock,  "data-seller=""",                           1,13, """"  ,     1,1,  T )
-		Buyout		:= TradeUtils.StrX( ItemBlock,  "data-buyout=""",                           T,13, """"  ,     1,1,  T )
-		IGN			:= TradeUtils.StrX( ItemBlock,  "data-ign=""",                              T,10, """"  ,     1,1     )
-		*/
-		
+	While A_Index < NoOfItemsToShow {		
 		ItemBlock 	:= TradeUtils.HtmlParseItemData(html, "<tbody id=""item-container-" A_Index - 1 """(.*?)<\/tbody>", html)	
 		AccountName 	:= TradeUtils.HtmlParseItemData(ItemBlock, "data-seller=""(.*?)""")
 		Buyout 		:= TradeUtils.HtmlParseItemData(ItemBlock, "data-buyout=""(.*?)""")
@@ -3450,8 +3445,8 @@ ReadPoeNinjaCurrencyData:
 	
 	global ChaosEquivalents := {}
 	For key, val in CurrencyHistoryData {
-		currencyTypeName := RegexReplace(val.currencyTypeName, "i)'", "")
-		ChaosEquivalents[val.currencyTypeName] := val.chaosEquivalent		
+		currencyTypeName := RegexReplace(val.currencyTypeName, "[^a-z A-Z]", "")
+		ChaosEquivalents[currencyTypeName] := val.chaosEquivalent		
 	}
 	ChaosEquivalents["Chaos Orb"] := 1
 	
